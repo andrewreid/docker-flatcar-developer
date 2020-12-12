@@ -36,7 +36,8 @@ to availability of this Docker image.
 Find the image on Docker Hub: https://hub.docker.com/r/mediadepot/flatcar-developer/
 
 ```
-docker pull mediadepot/flatcar-developer:1576.5.0
+docker pull mediadepot/flatcar-developer:2605.9.0
+docker pull mediadepot/flatcar-developer:2605.9.0-sources
 ```
 
 
