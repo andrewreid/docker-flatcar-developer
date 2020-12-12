@@ -21,7 +21,7 @@ RUN emerge -gKq --jobs 4 --load-average 4 coreos-sources || echo "failed to down
 # Prepare the filesystem
 # KERNEL_VERSION is determined from kernel source, not running kernel.
 # see https://superuser.com/questions/504684/is-the-version-of-the-linux-kernel-listed-in-the-source-some-where
-RUN && cp /usr/lib64/modules/$(ls /usr/lib64/modules)/build/.config /usr/src/linux/ \
+RUN cp /usr/lib64/modules/$(ls /usr/lib64/modules)/build/.config /usr/src/linux/ \
     && make -C /usr/src/linux modules_prepare \
     && export KERNEL_VERSION=$(cat /usr/src/linux/include/config/kernel.release) \
     && cp /lib/modules/${KERNEL_VERSION}/build/Module.symvers /usr/src/linux/
