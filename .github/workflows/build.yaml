@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        flatcar_track: ['stable', 'beta', 'alpha']
+        flatcar_track: ['stable']
     env:
       DOCKER_HUB_USERNAME: 'mediadepot'
       DOCKER_HUB_REPO: 'flatcar-developer'
