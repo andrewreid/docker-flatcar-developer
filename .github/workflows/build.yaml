@@ -45,6 +45,10 @@ jobs:
           sudo tar -cp --one-file-system -C ${FLATCAR_VERSION} . | docker import - ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}
           rm -rf flatcar_developer_container.bin flatcar_developer_container.bin.bz2
 
+          echo "=========================== Push Image ==========================="
+          docker login -u="analogj" -p="${{ secrets.DOCKER_HUB_PASSWORD }}"
+          docker push ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}
+
       - name: Create Developer Image with Sources
         run: |
           echo "=========================== Check ==========================="
@@ -65,5 +69,4 @@ jobs:
 
           echo "=========================== Push Images ==========================="
           docker login -u="analogj" -p="${{ secrets.DOCKER_HUB_PASSWORD }}"
-          docker push ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}
           docker push ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}-sources
