@@ -24,4 +24,4 @@ RUN emerge -gKq --jobs 4 --load-average 4 coreos-sources || echo "failed to down
 RUN cp /usr/lib64/modules/$(ls /usr/lib64/modules)/build/.config /usr/src/linux/ \
     && make -C /usr/src/linux modules_prepare
 RUN export KERNEL_VERSION=$(cat /usr/src/linux/include/config/kernel.release || ls /lib/modules) \
-    && cp /lib/modules/${KERNEL_VERSION}/build/Module.symvers /usr/src/linux/
+    && cp /usr/lib64/modules/$(ls /usr/lib64/modules)/build/Module.symvers /usr/src/linux/
