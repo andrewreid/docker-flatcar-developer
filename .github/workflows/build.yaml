@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v2
       - name: Download and Convert Flatcar Developer Container
         run: |
-          echo "${{github.event_name}}"
+          echo "=========================== Check ==========================="
           curl https://${{matrix.flatcar_track}}.release.flatcar-linux.net/amd64-usr/current/version.txt -o version.txt
           cat version.txt
           export $(cat version.txt | xargs)
@@ -36,6 +36,8 @@ jobs:
             curl -s https://hub.docker.com/v2/repositories/${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}/tags/?page_size=10000 |
             jq -e "[.results | .[] | .name == \"${FLATCAR_VERSION}\"] | any | not" || exit 0;
           fi
+
+          echo "=========================== Download Developer Container ==========================="
           curl -L https://${{matrix.flatcar_track}}.release.flatcar-linux.net/amd64-usr/${FLATCAR_VERSION}/flatcar_developer_container.bin.bz2 -o flatcar_developer_container.bin.bz2
           bunzip2 -k flatcar_developer_container.bin.bz2
           mkdir ${FLATCAR_VERSION}
@@ -43,8 +45,7 @@ jobs:
           sudo tar -cp --one-file-system -C ${FLATCAR_VERSION} . | docker import - ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}
           rm -rf flatcar_developer_container.bin flatcar_developer_container.bin.bz2
 
-      - name: Create Developer Container with Kernel Sources
-        run: |
+          echo "=========================== Build Developer Container w/Sources ==========================="
           curl https://${{matrix.flatcar_track}}.release.flatcar-linux.net/amd64-usr/current/version.txt -o version.txt
           cat version.txt
           export $(cat version.txt | xargs)
@@ -54,6 +55,7 @@ jobs:
             --tag ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}-sources \
             - < Dockerfile
 
+          echo "=========================== Push Images ==========================="
           docker login -u="analogj" -p="${{ secrets.DOCKER_HUB_PASSWORD }}"
           docker push ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}
           docker push ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}-sources
