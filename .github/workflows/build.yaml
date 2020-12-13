@@ -34,7 +34,7 @@ jobs:
           export $(cat version.txt | xargs)
           if [ "${{github.event_name}}" == "workflow_dispatch" ]; then
             curl -s https://hub.docker.com/v2/repositories/${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}/tags/?page_size=10000 |
-            jq -e "[.results | .[] | .name == \"${FLATCAR_VERSION}\"] | any | not" || exit 0;
+            jq -e "[.results | .[] | .name == \"${FLATCAR_VERSION}\"] | any | not" || echo "Tag '${FLATCAR_VERSION}' already exists" exit 0;
           fi
 
           echo "=========================== Download Developer Container ==========================="
@@ -45,10 +45,18 @@ jobs:
           sudo tar -cp --one-file-system -C ${FLATCAR_VERSION} . | docker import - ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}
           rm -rf flatcar_developer_container.bin flatcar_developer_container.bin.bz2
 
-          echo "=========================== Build Developer Container w/Sources ==========================="
+      - name: Download and Convert Flatcar Developer Container
+        run: |
+          echo "=========================== Check ==========================="
           curl https://${{matrix.flatcar_track}}.release.flatcar-linux.net/amd64-usr/current/version.txt -o version.txt
           cat version.txt
           export $(cat version.txt | xargs)
+          if [ "${{github.event_name}}" == "workflow_dispatch" ]; then
+            curl -s https://hub.docker.com/v2/repositories/${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}/tags/?page_size=10000 |
+            jq -e "[.results | .[] | .name == \"${FLATCAR_VERSION}-sources\"] | any | not" || echo "Tag '${FLATCAR_VERSION}-sources' already exists" exit 0;
+          fi
+
+          echo "=========================== Build Developer Container w/Sources ==========================="
           docker image build \
             --build-arg FLATCAR_VERSION=${FLATCAR_VERSION} \
             --build-arg FLATCAR_BUILD=${FLATCAR_BUILD} \
