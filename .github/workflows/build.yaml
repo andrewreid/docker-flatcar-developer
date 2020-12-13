@@ -45,7 +45,7 @@ jobs:
           sudo tar -cp --one-file-system -C ${FLATCAR_VERSION} . | docker import - ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}
           rm -rf flatcar_developer_container.bin flatcar_developer_container.bin.bz2
 
-      - name: Download and Convert Flatcar Developer Container
+      - name: Create Developer Image with Sources
         run: |
           echo "=========================== Check ==========================="
           curl https://${{matrix.flatcar_track}}.release.flatcar-linux.net/amd64-usr/current/version.txt -o version.txt
