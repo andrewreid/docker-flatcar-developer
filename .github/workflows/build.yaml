@@ -34,7 +34,7 @@ jobs:
           export $(cat version.txt | xargs)
           if [ "${{github.event_name}}" == "workflow_dispatch" ]; then
             curl -s https://hub.docker.com/v2/repositories/${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}/tags/?page_size=10000 |
-            jq -e "[.results | .[] | .name == \"${FLATCAR_VERSION}\"] | any | not" || echo "Tag '${FLATCAR_VERSION}' already exists" exit 0;
+            jq -e "[.results | .[] | .name == \"${FLATCAR_VERSION}\"] | any | not" || echo "Tag '${FLATCAR_VERSION}' already exists" && exit 0;
           fi
 
           echo "=========================== Download Developer Container ==========================="
@@ -57,7 +57,7 @@ jobs:
           export $(cat version.txt | xargs)
           if [ "${{github.event_name}}" == "workflow_dispatch" ]; then
             curl -s https://hub.docker.com/v2/repositories/${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}/tags/?page_size=10000 |
-            jq -e "[.results | .[] | .name == \"${FLATCAR_VERSION}-sources\"] | any | not" || echo "Tag '${FLATCAR_VERSION}-sources' already exists" exit 0;
+            jq -e "[.results | .[] | .name == \"${FLATCAR_VERSION}-sources\"] | any | not" || echo "Tag '${FLATCAR_VERSION}-sources' already exists" && exit 0;
           fi
 
           echo "=========================== Build Developer Container w/Sources ==========================="
