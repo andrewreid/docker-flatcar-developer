@@ -65,6 +65,7 @@ jobs:
           docker image build \
             --build-arg FLATCAR_VERSION=${FLATCAR_VERSION} \
             --build-arg FLATCAR_BUILD=${FLATCAR_BUILD} \
+            --build-arg FLATCAR_TRACK=${{matrix.flatcar_track}} \
             --tag ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}-sources \
             - < Dockerfile
 
