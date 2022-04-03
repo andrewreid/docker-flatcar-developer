@@ -12,6 +12,9 @@ allows us to use the familiar Docker workflow. It is especially nice in
 combination with multi-stage Docker builds, which allows to create minimal
 transport images without the build chain overhead.
 
+These images are intended to be used by [Flatcar Forklift drivers](https://github.com/mediadepot/flatcar-forklift)
+
+
 ## Kernel Sources
 
 In addition to the "base" development container, we will also create a "sources" version, which extends the "base" image
