@@ -13,7 +13,7 @@ RUN emerge-gitclone \
     && export OVERLAY_VERSION="${FLATCAR_TRACK}-${FLATCAR_VERSION}" \
     && export PORTAGE_VERSION="${FLATCAR_TRACK}-${FLATCAR_VERSION}" \
     && env \
-    && git -C /var/lib/portage/coreos-overlay checkout "tags/$OVERLAY_VERSION" -b "$OVERLAY_VERSION" \
+    && git -C /var/lib/portage/coreos-overlay checkout "tags/$OVERLAY_VERSION" -b "$OVERLAY_VERSION-local" \
     && git -C /var/lib/portage/portage-stable checkout "tags/$PORTAGE_VERSION" -b "$PORTAGE_VERSION-local"
 
 # try to use pre-built binaries and fall back to building from source
