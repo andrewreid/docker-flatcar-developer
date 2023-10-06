@@ -2,8 +2,8 @@ name: Build Docker Images
 # This workflow is triggered on a schedule and can also be triggered manually
 on:
   schedule:
-    # Every day at 10am
-    - cron: '0 10 * * *'
+    # Every 4 hours
+    - cron: '0 */4 * * *'
   workflow_dispatch:
     inputs:
       stream:
