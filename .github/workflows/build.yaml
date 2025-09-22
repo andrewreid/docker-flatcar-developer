@@ -72,4 +72,3 @@ jobs:
           echo "=========================== Push Images ==========================="
           docker login -u="analogj" -p="${{ secrets.DOCKER_HUB_PASSWORD }}"
           docker push ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}-sources
-      - uses: gautamkrishnar/keepalive-workflow@v1 # using the workflow with default settings
