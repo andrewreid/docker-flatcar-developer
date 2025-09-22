@@ -17,25 +17,44 @@ jobs:
 #      status: ${{ steps.early.conclusion }}
     name: Build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
     strategy:
       fail-fast: false
       matrix:
         flatcar_track: ['stable', 'beta', 'alpha']
     env:
-      DOCKER_HUB_USERNAME: 'mediadepot'
-      DOCKER_HUB_REPO: 'flatcar-developer'
+      GHCR_REGISTRY: ghcr.io
+      IMAGE_NAME: flatcar-developer
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
+      - name: Log in to GHCR
+        uses: docker/login-action@v3.5.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - name: Download and Convert Flatcar Developer Container
+        id: developer_container
         run: |
+          set -euo pipefail
           echo "=========================== Check ==========================="
           curl https://${{matrix.flatcar_track}}.release.flatcar-linux.net/amd64-usr/current/version.txt -o version.txt
           cat version.txt
           export $(cat version.txt | xargs)
+          echo "FLATCAR_VERSION=${FLATCAR_VERSION}" >> "$GITHUB_ENV"
+          echo "FLATCAR_BUILD=${FLATCAR_BUILD}" >> "$GITHUB_ENV"
+          echo "flatcar_version=${FLATCAR_VERSION}" >> "$GITHUB_OUTPUT"
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          image_repo="${{ env.GHCR_REGISTRY }}/$owner/${{ env.IMAGE_NAME }}"
           if [ "${{github.event_name}}" != "workflow_dispatch" ]; then
-            curl -s https://hub.docker.com/v2/repositories/${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}/tags/?page_size=10000 |
-            jq -e "[.results | .[] | .name == \"${FLATCAR_VERSION}\"] | any | not" || (echo "Tag '${FLATCAR_VERSION}' already exists" && exit 0);
+            if docker manifest inspect "${image_repo}:${FLATCAR_VERSION}" > /dev/null 2>&1; then
+              echo "Image '${FLATCAR_VERSION}' already exists"
+              echo "pushed=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           fi
 
           echo "=========================== Download Developer Container ==========================="
@@ -43,22 +62,32 @@ jobs:
           bunzip2 -k flatcar_developer_container.bin.bz2
           mkdir ${FLATCAR_VERSION}
           sudo mount -o ro,loop,offset=2097152 flatcar_developer_container.bin ${FLATCAR_VERSION}
-          sudo tar -cp --one-file-system -C ${FLATCAR_VERSION} . | docker import - ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}
+          sudo tar -cp --one-file-system -C ${FLATCAR_VERSION} . | docker import - "${image_repo}:${FLATCAR_VERSION}"
           rm -rf flatcar_developer_container.bin flatcar_developer_container.bin.bz2
+          sudo umount ${FLATCAR_VERSION}
+          rmdir ${FLATCAR_VERSION}
 
           echo "=========================== Push Image ==========================="
-          docker login -u="analogj" -p="${{ secrets.DOCKER_HUB_PASSWORD }}"
-          docker push ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}
+          docker push "${image_repo}:${FLATCAR_VERSION}"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
 
       - name: Create Developer Image with Sources
+        id: developer_sources
         run: |
+          set -euo pipefail
           echo "=========================== Check ==========================="
           curl https://${{matrix.flatcar_track}}.release.flatcar-linux.net/amd64-usr/current/version.txt -o version.txt
           cat version.txt
           export $(cat version.txt | xargs)
+          echo "FLATCAR_VERSION=${FLATCAR_VERSION}" >> "$GITHUB_ENV"
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          image_repo="${{ env.GHCR_REGISTRY }}/$owner/${{ env.IMAGE_NAME }}"
           if [ "${{github.event_name}}" != "workflow_dispatch" ]; then
-            curl -s https://hub.docker.com/v2/repositories/${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}/tags/?page_size=10000 |
-            jq -e "[.results | .[] | .name == \"${FLATCAR_VERSION}-sources\"] | any | not" || (echo "Tag '${FLATCAR_VERSION}-sources' already exists" && exit 0);
+            if docker manifest inspect "${image_repo}:${FLATCAR_VERSION}-sources" > /dev/null 2>&1; then
+              echo "Image '${FLATCAR_VERSION}-sources' already exists"
+              echo "pushed=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           fi
 
           echo "=========================== Build Developer Container w/Sources ==========================="
@@ -66,9 +95,21 @@ jobs:
             --build-arg FLATCAR_VERSION=${FLATCAR_VERSION} \
             --build-arg FLATCAR_BUILD=${FLATCAR_BUILD} \
             --build-arg FLATCAR_TRACK=${{matrix.flatcar_track}} \
-            --tag ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}-sources \
+            --tag "${image_repo}:${FLATCAR_VERSION}-sources" \
             - < Dockerfile
 
           echo "=========================== Push Images ==========================="
-          docker login -u="analogj" -p="${{ secrets.DOCKER_HUB_PASSWORD }}"
-          docker push ${DOCKER_HUB_USERNAME}/${DOCKER_HUB_REPO}:${FLATCAR_VERSION}-sources
+          docker push "${image_repo}:${FLATCAR_VERSION}-sources"
+          echo "pushed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        if: steps.developer_sources.outputs.pushed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: flatcar-${{ matrix.flatcar_track }}-${{ steps.developer_container.outputs.flatcar_version }}
+          name: Flatcar ${{ matrix.flatcar_track }} ${{ steps.developer_container.outputs.flatcar_version }}
+          body: |
+            Track: ${{ matrix.flatcar_track }}
+            Version: ${{ steps.developer_container.outputs.flatcar_version }}
+          prerelease: ${{ matrix.flatcar_track != 'stable' }}
+          draft: false
