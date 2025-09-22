@@ -82,6 +82,10 @@ jobs:
           echo "FLATCAR_VERSION=${FLATCAR_VERSION}" >> "$GITHUB_ENV"
           owner="${GITHUB_REPOSITORY_OWNER,,}"
           image_repo="${{ env.GHCR_REGISTRY }}/$owner/${{ env.IMAGE_NAME }}"
+          created="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          source_repo="https://github.com/${GITHUB_REPOSITORY}"
+          source_ref="${GITHUB_REF_NAME:-${GITHUB_REF}}"
+          revision="${GITHUB_SHA}"
           if [ "${{github.event_name}}" != "workflow_dispatch" ]; then
             if docker manifest inspect "${image_repo}:${FLATCAR_VERSION}-sources" > /dev/null 2>&1; then
               echo "Image '${FLATCAR_VERSION}-sources' already exists"
@@ -92,9 +96,15 @@ jobs:
 
           echo "=========================== Build Developer Container w/Sources ==========================="
           docker image build \
+            --build-arg IMAGE_REPO=${image_repo} \
             --build-arg FLATCAR_VERSION=${FLATCAR_VERSION} \
             --build-arg FLATCAR_BUILD=${FLATCAR_BUILD} \
             --build-arg FLATCAR_TRACK=${{matrix.flatcar_track}} \
+            --build-arg IMAGE_TITLE=${{ env.IMAGE_NAME }} \
+            --build-arg SOURCE_REPO=${source_repo} \
+            --build-arg SOURCE_REF=${source_ref} \
+            --build-arg REVISION=${revision} \
+            --build-arg CREATED=${created} \
             --tag "${image_repo}:${FLATCAR_VERSION}-sources" \
             - < Dockerfile
 

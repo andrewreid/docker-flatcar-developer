@@ -1,9 +1,26 @@
+ARG IMAGE_REPO
 ARG FLATCAR_VERSION
-FROM mediadepot/flatcar-developer:${FLATCAR_VERSION}
-LABEL maintainer="Jason Kulatunga <jason@thesparktree.com>"
+FROM ${IMAGE_REPO}:${FLATCAR_VERSION}
+
 ARG FLATCAR_VERSION
 ARG FLATCAR_BUILD
 ARG FLATCAR_TRACK
+ARG SOURCE_REPO
+ARG SOURCE_REF
+ARG REVISION
+ARG CREATED
+ARG IMAGE_TITLE=flatcar-developer
+
+LABEL maintainer="Andrew Reid <andrew@reid.ee>" \
+    org.opencontainers.image.title="${IMAGE_TITLE}" \
+    org.opencontainers.image.description="Flatcar developer container image with bundled build dependencies and sources." \
+    org.opencontainers.image.source="${SOURCE_REPO}" \
+    org.opencontainers.image.url="${SOURCE_REPO}" \
+    org.opencontainers.image.version="${FLATCAR_VERSION}" \
+    org.opencontainers.image.revision="${REVISION}" \
+    org.opencontainers.image.created="${CREATED}" \
+    org.opencontainers.image.ref.name="${SOURCE_REF}" \
+    org.opencontainers.image.authors="Andrew Reid <andrew@reid.ee>"
 
 # Create a Flatcar Linux Developer image as defined in:
 # https://docs.flatcar-linux.org/os/kernel-modules/
