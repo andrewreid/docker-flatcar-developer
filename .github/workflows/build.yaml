@@ -38,6 +38,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Download and Convert Flatcar Developer Container
         id: developer_container
+        env:
+          OWNER: ${{ github.repository_owner }}
         run: |
           set -euo pipefail
           echo "=========================== Check ==========================="
@@ -47,7 +49,7 @@ jobs:
           echo "FLATCAR_VERSION=${FLATCAR_VERSION}" >> "$GITHUB_ENV"
           echo "FLATCAR_BUILD=${FLATCAR_BUILD}" >> "$GITHUB_ENV"
           echo "flatcar_version=${FLATCAR_VERSION}" >> "$GITHUB_OUTPUT"
-          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          owner="${OWNER,,}"
           image_repo="${{ env.GHCR_REGISTRY }}/$owner/${{ env.IMAGE_NAME }}"
           if [ "${{github.event_name}}" != "workflow_dispatch" ]; then
             if docker manifest inspect "${image_repo}:${FLATCAR_VERSION}" > /dev/null 2>&1; then
@@ -73,6 +75,11 @@ jobs:
 
       - name: Create Developer Image with Sources
         id: developer_sources
+        env:
+          OWNER: ${{ github.repository_owner }}
+          SOURCE_REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          SOURCE_REF_NAME: ${{ github.ref_name }}
+          REVISION_SHA: ${{ github.sha }}
         run: |
           set -euo pipefail
           echo "=========================== Check ==========================="
@@ -80,12 +87,12 @@ jobs:
           cat version.txt
           export $(cat version.txt | xargs)
           echo "FLATCAR_VERSION=${FLATCAR_VERSION}" >> "$GITHUB_ENV"
-          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          owner="${OWNER,,}"
           image_repo="${{ env.GHCR_REGISTRY }}/$owner/${{ env.IMAGE_NAME }}"
           created="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          source_repo="https://github.com/${GITHUB_REPOSITORY}"
-          source_ref="${GITHUB_REF_NAME:-${GITHUB_REF}}"
-          revision="${GITHUB_SHA}"
+          source_repo="$SOURCE_REPO_URL"
+          source_ref="${SOURCE_REF_NAME:-${GITHUB_REF#refs/*/}}"
+          revision="$REVISION_SHA"
           if [ "${{github.event_name}}" != "workflow_dispatch" ]; then
             if docker manifest inspect "${image_repo}:${FLATCAR_VERSION}-sources" > /dev/null 2>&1; then
               echo "Image '${FLATCAR_VERSION}-sources' already exists"
